@@ -52,3 +52,17 @@ def create_user(data_user: UserSchema):
         #va a retornar el status code cuando todo se cumpla como respuesta
         return Response(status_code=HTTP_201_CREATED)
     
+@user.put('api/user/{user_id}',response_model=UserSchema)
+def update_user(data_update:UserSchema,user_id:str):
+    with engine.connect() as conn:
+        #aqui estamos encriptando el password que se pasa.
+        encryp_passw = generate_password_hash(data_update.user_passw, 'pbkdf2:sha256:30',30)
+        #aqui estamos actualizando los valores en nuestra DB
+        conn.execute(users.update().values(name= data_update.name ,username= data_update.username,user_passw= encryp_passw).where(users.c.id == user_id))
+
+        #aca mostramos el usuario que se acaba de actualizar para devolverlo
+        result = conn.execute(users.select().where(users.c.id == user_id)).first()
+
+        return result
+
+        
