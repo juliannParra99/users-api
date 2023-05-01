@@ -1,7 +1,7 @@
 #en esta carpeta se van a establecer las distintas rutas
 from fastapi import APIRouter, Response
-from starlette.status import HTTP_201_CREATED,HTTP_204_NO_CONTENT
-from schema.user_schema import UserSchema
+from starlette.status import HTTP_201_CREATED,HTTP_204_NO_CONTENT, HTTP_401_UNAUTHORIZED
+from schema.user_schema import UserSchema, DataUser
 from config.db import engine
 from model.users import users
 #esto se va a utilizar para encriptar el password del usuario
@@ -52,6 +52,31 @@ def create_user(data_user: UserSchema):
         #va a retornar el status code cuando todo se cumpla como respuesta
         return Response(status_code=HTTP_201_CREATED)
     
+#ruta que va a comparar usuarios y constraseñas y verificar si el usuario realmente existe dentro de nuestra DB: Pero en la actualidad hay mejores maneras de realizar esto emdiante los tokens de json que permite hacer un logeo mas seguro.
+@user.post('api/user/login', status_code=200)
+def user_login(data_user:DataUser):
+    with engine.connect() as conn:
+        #aca vamos a verificar si el 'username' que esta en nuestra DB como columna, coincide con el user_name que esta pasando el usuario, para ver si existe o no
+        result = conn.execute(users.select().where(users.c.username == data_user.user_name)).first()
+
+        if result != None:
+        #check_password_hash devuelve un bool
+            check_passw = check_password_hash(result[3], data_user.user_passw)
+            #si check_passw da true, osea si coincidieron los valores.
+            if check_passw:
+                return {
+                    "status": 200,
+                    "message": "Access success"
+                }
+            return {
+                    "status": HTTP_401_UNAUTHORIZED,
+                    "message": "Access success"
+                }
+
+
+
+
+    
 @user.put('api/user/{user_id}',response_model=UserSchema)
 def update_user(data_update:UserSchema,user_id:str):
     with engine.connect() as conn:
@@ -69,8 +94,6 @@ def update_user(data_update:UserSchema,user_id:str):
 def delete_user(user_id:str):
     with engine.connect() as conn:
         conn.execute(users.delete().where(users.c.id == user_id))
-        
+
         return Response(status_code=HTTP_204_NO_CONTENT)
 
-
-        
