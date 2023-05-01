@@ -1,6 +1,6 @@
 #en esta carpeta se van a establecer las distintas rutas
 from fastapi import APIRouter, Response
-from starlette.status import HTTP_201_CREATED
+from starlette.status import HTTP_201_CREATED,HTTP_204_NO_CONTENT
 from schema.user_schema import UserSchema
 from config.db import engine
 from model.users import users
@@ -64,5 +64,13 @@ def update_user(data_update:UserSchema,user_id:str):
         result = conn.execute(users.select().where(users.c.id == user_id)).first()
 
         return result
+    
+@user.delete('api/user/{user_id}',status_code=HTTP_204_NO_CONTENT)
+def delete_user(user_id:str):
+    with engine.connect() as conn:
+        conn.execute(users.delete().where(users.c.id == user_id))
+        
+        return Response(status_code=HTTP_204_NO_CONTENT)
+
 
         
