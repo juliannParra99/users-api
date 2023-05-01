@@ -6,5 +6,5 @@ class UserSchema(BaseModel):
     id: Optional[str]
     name: str
     username: str
-    passw: str
+    user_passw: str
     

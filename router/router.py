@@ -1,8 +1,11 @@
 #en esta carpeta se van a establecer las distintas rutas
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
+from starlette.status import HTTP_201_CREATED
 from schema.user_schema import UserSchema
 from config.db import conn
 from model.users import users
+#esto se va a utilizar para encriptar el password del usuario
+from werkzeug.security import generate_password_hash, check_password_hash
 
 user = APIRouter()
 
@@ -10,19 +13,18 @@ user = APIRouter()
 def root():
     return {"message":"Hi, I'm fastApi with a router"}
 
-
-@user.post('/api/user')
+#el http:201 indica que algo fue creado ene l servidor; es util para la documentacion seguir los diversos codigos http
+@user.post('/api/user', status_code=HTTP_201_CREATED)
 def create_user(data_user: UserSchema):
-    # print(data_user) 
-
-    #guardo los datos de data_user en formato dictionario, para poder acceder a los datos por medio de la clave-valor
+    
     new_user = data_user.dict()
-
-
-    #aca se van  a pasar los datos que se pasan por parametro a nuestra base de datos, por lo que creamos una conexion, importando de config.db 'conn'
-
+    #el generate_password_hash recibe dos parametros: el texto que queremos codificar primero, y el seguindo el metodo de encriptacion, y la fuerza de codificacion .
+    new_user["user_passw"] = generate_password_hash(data_user.user_passw,'pbkdf2:sha256:30',30)
+    
     print(new_user)
+
     # conn.execute(users.insert().values(new_user))
 
-    return 'Success!'
+    #va a retornar el status code cuando todo se cumpla como respuesta
+    return Response(status_code=HTTP_201_CREATED)
     
